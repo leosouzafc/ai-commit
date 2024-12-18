@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 import { exec } from "child_process";
 
+interface Response {
+  response: string;
+}
+
 export function activate(context: vscode.ExtensionContext) {
   const scm = vscode.scm.createSourceControl("ai-commit", "ai-commit");
   const inputBox = scm.inputBox;
@@ -47,7 +51,7 @@ async function generateCommitMessage(): Promise<string | undefined> {
         style: "semantic",
       }),
     });
-    const data: any = await response.json();
+    const data: Response = (await response.json()) as Response;
 
     if (data.response) {
       return data.response;
