@@ -2,7 +2,17 @@ import * as vscode from "vscode";
 import { exec } from "child_process";
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('Congratulations, your extension "ai-commit" is now active!');
+  const scm = vscode.scm.createSourceControl("ai-commit", "ai-commit");
+  const inputBox = scm.inputBox;
+  const resourceGroup = scm.createResourceGroup("main", "Main Group");
+  resourceGroup.resourceStates = [];
+  scm.statusBarCommands = [
+    {
+      command: "ai-commit.generateMessage",
+      title: "Gerar mensagem",
+      tooltip: "Clique para gerar uma mensagem de commit",
+    },
+  ];
 
   const disposable = vscode.commands.registerCommand(
     "ai-commit.helloWorld",
@@ -15,7 +25,8 @@ export function activate(context: vscode.ExtensionContext) {
     async () => {
       try {
         vscode.window.showInformationMessage("Generating commit message...");
-        await generateCommitMessage();
+        const result = await generateCommitMessage();
+        if (result) inputBox.value = result;
       } catch (error) {
         vscode.window.showErrorMessage(`Erro: ${error}`);
       }
@@ -23,9 +34,9 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(disposable);
-  context.subscriptions.push(generateMessage);
+  context.subscriptions.push(scm, generateMessage);
 }
-async function generateCommitMessage() {
+async function generateCommitMessage(): Promise<string | undefined> {
   try {
     const diffs = await getStagedDiffs();
     const response = await fetch("http://localhost:8000/generate-commit", {
@@ -39,7 +50,7 @@ async function generateCommitMessage() {
     const data: any = await response.json();
 
     if (data.response) {
-      vscode.window.showInformationMessage(data.response);
+      return data.response;
     } else {
       vscode.window.showErrorMessage("Falha ao gerar mensagem de commit.");
     }
