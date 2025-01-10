@@ -2,6 +2,10 @@
   "name": "ai-commit",
   "displayName": "ai-commit",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leosouzafc/ai-commit"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.96.0"
@@ -15,10 +19,20 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Configurações da extensão",
+      "properties": {
+        "ai-commit.jwt": {
+          "type": "string",
+          "description": "Token JWT para autenticação",
+          "default": ""
+        }
+      }
+    },
     "commands": [
       {
-        "command": "ai-commit.helloWorld",
-        "title": "Hello World"
+        "command": "ai-commit.updateJWT",
+        "title": "Update JWT"
       },
       {
         "command": "ai-commit.generateMessage",
