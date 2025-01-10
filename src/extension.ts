@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
 import { exec } from "child_process";
-
-interface Response {
-  response: string;
-}
+import { ApiResponse, ApiErrorResponse, ApiSuccessResponse } from "./types/api";
 
 export function activate(context: vscode.ExtensionContext) {
   const scm = vscode.scm.createSourceControl("ai-commit", "ai-commit");
@@ -18,50 +15,101 @@ export function activate(context: vscode.ExtensionContext) {
     },
   ];
 
-  const disposable = vscode.commands.registerCommand(
-    "ai-commit.helloWorld",
-    () => {
-      vscode.window.showInformationMessage("Hello World from ai-commit!");
-    }
-  );
   const generateMessage = vscode.commands.registerCommand(
     "ai-commit.generateMessage",
     async () => {
       try {
-        vscode.window.showInformationMessage("Generating commit message...");
-        const result = await generateCommitMessage();
-        if (result) inputBox.value = result;
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: "Generating commit message...",
+            cancellable: false,
+          },
+          async () => {
+            const result = await generateCommitMessage();
+            if (result) {
+              inputBox.value = result;
+            }
+          }
+        );
       } catch (error) {
         vscode.window.showErrorMessage(`Erro: ${error}`);
       }
     }
   );
-
-  context.subscriptions.push(disposable);
-  context.subscriptions.push(scm, generateMessage);
+  const updateJWT = vscode.commands.registerCommand(
+    "ai-commit.updateJWT",
+    async () => {
+      const jwt = await vscode.window.showInputBox({
+        prompt: "Insira o JWT da sua conta do FCopilot",
+        ignoreFocusOut: true,
+        placeHolder: "your-jwt-token",
+      });
+      if (jwt) {
+        vscode.workspace.getConfiguration("ai-commit").update("jwt", jwt, true);
+        vscode.window.showInformationMessage("JWT atualizado com sucesso");
+      }
+    }
+  );
+  context.subscriptions.push(scm, generateMessage, updateJWT);
 }
+
+function isApiErrorResponse(
+  response: ApiResponse
+): response is ApiErrorResponse {
+  return (response as ApiErrorResponse).detail !== undefined;
+}
+
 async function generateCommitMessage(): Promise<string | undefined> {
   try {
+    const jwtToken = vscode.workspace
+      .getConfiguration("ai-commit")
+      .get<string>("jwt");
     const diffs = await getStagedDiffs();
-    const response = await fetch("http://localhost:8000/generate-commit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        diff: diffs,
-        style: "semantic",
-      }),
-    });
-    const data: Response = (await response.json()) as Response;
-
-    if (data.response) {
-      return data.response;
-    } else {
-      vscode.window.showErrorMessage("Falha ao gerar mensagem de commit.");
+    const response = await fetch(
+      "https://fcopilot.fcamara.com/api/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify({
+          model: "orange-assistant",
+          stream: false,
+          messages: [
+            {
+              role: "user",
+              content: `Você é um gerador automático de mensagens de commit. Sua tarefa é analisar as diferenças de código (diffs) fornecidas e gerar uma mensagem de commit seguindo o padrão de Commits Convencionais. A mensagem deve incluir o tipo, o escopo opcional e uma descrição clara e breve das alterações realizadas, não mais que uma linha, não pule linha e escreva um novo parágrafo. Caso você não tenha informações corretas ou um diff, responda 'Não foi possível gerar a mensagem'. Diffs: ${diffs}. `,
+            },
+          ],
+        }),
+      }
+    );
+    const data: ApiResponse = (await response.json()) as ApiResponse;
+    if (isApiErrorResponse(data)) {
+      if (data.detail === "401 Unauthorized") {
+        vscode.window.showWarningMessage(
+          "Sua autenticação expirou ou é inválida. Atualize o JWT."
+        );
+        await vscode.commands.executeCommand("ai-commit.updateJWT");
+        vscode.window.showWarningMessage("Tente novamente");
+        return;
+      }
+      vscode.window.showErrorMessage(`Erro: ${data.detail}`);
+      return;
     }
+
+    if (data.choices) {
+      return data.choices[0].message.content;
+    }
+
+    vscode.window.showErrorMessage("Falha ao gerar mensagem de commit.");
   } catch (error) {
     vscode.window.showErrorMessage(`Erro ao gerar commit: ${error}`);
   }
 }
+
 function getStagedDiffs(): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(
@@ -69,11 +117,9 @@ function getStagedDiffs(): Promise<string> {
       { cwd: vscode.workspace.rootPath },
       (error, stdout, stderr) => {
         if (error) {
-          console.error(`Erro ao executar git diff: ${error.message}`);
           return reject(error.message);
         }
         if (stderr) {
-          console.error(`stderr: ${stderr}`);
           return reject(stderr);
         }
         resolve(stdout);
