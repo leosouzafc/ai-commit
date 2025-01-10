@@ -1,71 +1,72 @@
-# ai-commit README
+# **AI-Commit**
 
-This is the README for your extension "ai-commit". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+**AI-Commit** é uma extensão para o Visual Studio Code que gera mensagens de commit semânticas automaticamente, utilizando os recursos do FCopilot. Ideal para quem deseja manter boas práticas de versionamento sem esforço!
 
 ---
 
-## Following extension guidelines
+## **Requisitos**
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+- Um token JWT disponível no site do FCopilot.
+- Conexão com a internet.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+---
 
-## Working with Markdown
+## **Instalação**
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+1. **Baixe a Extensão**:
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+   - Procure por **AI-Commit** na aba de extensões do Visual Studio Code.
 
-## For more information
+2. **Configure o JWT**:
+   - Obtenha seu JWT no site do FCopilot:
+     1. Acesse [FCopilot](https://fcopilot.fcamara.com/).
+     2. Clique na sua foto de perfil (ou nas iniciais caso não tenha foto).
+        ![Foto 1](./src/assets/homepage.jpeg)
+     3. Vá para **Configurações (Settings)**.
+        ![Foto 2](./src/assets/settings.jpeg)
+     4. Na aba **Conta (Account)**, localize a seção **Chaves API**.
+        ![Foto 4](./src/assets/account_settings.jpeg)
+     5. Clique em **Mostrar** ao lado do JWT e copie o valor.
+        ![Foto 5](./src/assets/api_keys.jpeg)
+   - Quando solicitado pela extensão, insira seu JWT.
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+---
 
-**Enjoy!**
+## **Como Usar**
+
+1. **Geração Automática de Mensagens**:
+
+   - Pressione `Ctrl + Shift + P` e procure por **Generate Commit Message**.
+   - A mensagem será exibida na caixa de diálogo do controle de versão (ícone do Git no VS Code).
+
+2. **Ação Direta no Git**:
+   - No painel do Git, clique em **Gerar Mensagem** para criar automaticamente uma mensagem semântica para seu commit.
+
+---
+
+## **Recuperação de Erros**
+
+Se o JWT expirar ou for inválido:
+
+1. A extensão abrirá uma janela solicitando um novo JWT.
+2. Insira o novo JWT e tente gerar a mensagem novamente.
+
+---
+
+## **Funcionalidades**
+
+- Gera mensagens de commit semânticas com base no conteúdo do repositório.
+- Integração com o painel de controle de versão do VS Code.
+- Atualização rápida do JWT em caso de problemas.
+
+---
+
+## **Contribuições**
+
+Contribuições são bem-vindas! Envie um Pull Request ou abra uma Issue para sugestões e melhorias.
+
+---
+
+## **Licença**
+
+Este projeto é licenciado sob a [MIT License](./LICENSE).
